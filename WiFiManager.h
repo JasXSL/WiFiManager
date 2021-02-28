@@ -215,6 +215,9 @@ class WiFiManager
     //called when saving either params-in-wifi or params page
     void          setSaveParamsCallback( std::function<void()> func );
 
+    //called when receiving data to the /ajax endpoint
+    void          setAjaxCallback( std::function<String(WiFiManager*)> func );
+
     //called when saving params-in-wifi or params before anything else happens (eg wifi)
     void          setPreSaveConfigCallback( std::function<void()> func );
 
@@ -523,6 +526,7 @@ class WiFiManager
     void          handleWiFiStatus();
     void          handleRequest();
     void          handleParamSave();
+    void          handleAjax();
     void          doParamSave();
 
     boolean       captivePortal();
@@ -645,6 +649,7 @@ class WiFiManager
     std::function<void()> _savewificallback;
     std::function<void()> _presavecallback;
     std::function<void()> _saveparamscallback;
+    std::function<String(WiFiManager*)> _ajaxcallback;
     std::function<void()> _resetcallback;
 
     template <class T>

@@ -608,6 +608,7 @@ void WiFiManager::setupConfigPortal() {
   server->on(String(FPSTR(R_info)).c_str(),       std::bind(&WiFiManager::handleInfo, this));
   server->on(String(FPSTR(R_param)).c_str(),      std::bind(&WiFiManager::handleParam, this));
   server->on(String(FPSTR(R_paramsave)).c_str(),  std::bind(&WiFiManager::handleParamSave, this));
+  server->on(String(FPSTR(R_ajax)).c_str(),       std::bind(&WiFiManager::handleAjax, this));
   server->on(String(FPSTR(R_restart)).c_str(),    std::bind(&WiFiManager::handleReset, this));
   server->on(String(FPSTR(R_exit)).c_str(),       std::bind(&WiFiManager::handleExit, this));
   server->on(String(FPSTR(R_close)).c_str(),      std::bind(&WiFiManager::handleClose, this));
@@ -1740,6 +1741,21 @@ void WiFiManager::handleParamSave() {
   #endif
 }
 
+void WiFiManager::handleAjax(){
+  DEBUG_WM(DEBUG_VERBOSE,F("<- AJAX"));
+  handleRequest();
+  String page = ""; // @token titlewifi
+
+  if ( _ajaxcallback != NULL) {
+    page = _ajaxcallback(this);
+  }
+  
+  server->sendHeader(FPSTR(HTTP_HEAD_CL), String(page.length()));
+  server->send(200, FPSTR(HTTP_HEAD_CT), page);
+
+  DEBUG_WM(DEBUG_DEV,F("Sent AJAX response"));
+}
+
 void WiFiManager::doParamSave(){
    // @todo use new callback for before paramsaves, is this really needed?
   if ( _presavecallback != NULL) {
@@ -2572,6 +2588,15 @@ void WiFiManager::setConfigResetCallback( std::function<void()> func ) {
  */
 void WiFiManager::setSaveParamsCallback( std::function<void()> func ) {
   _saveparamscallback = func;
+}
+
+/**
+ * setConfigResetCallback, set a callback to occur when a resetSettings() occurs
+ * @access public
+ * @param {[type]} String(*func)(void)
+ */
+void WiFiManager::setAjaxCallback( std::function<String(WiFiManager*)> func ) {
+    _ajaxcallback = func;
 }
 
 /**
