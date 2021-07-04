@@ -34,6 +34,8 @@
 #warning "ARDUINO_ESP8266_RELEASE_2_3_0, some WM features disabled" 
 #define WM_NOASYNC         // esp8266 no async scan wifi
 #define WM_NOCOUNTRY       // esp8266 no country
+#define WM_NOAUTH          // no httpauth
+#define WM_NOSOFTAPSSID    // no softapssid() @todo shim
 #endif
 
 // #include "soc/efuse_reg.h" // include to add efuse chip rev to info, getChipRevision() is almost always the same though, so not sure why it matters.
@@ -120,13 +122,13 @@ class WiFiManagerParameter {
     ~WiFiManagerParameter();
     // WiFiManagerParameter& operator=(const WiFiManagerParameter& rhs);
 
-    const char *getID();
-    const char *getValue();
-    const char *getLabel();
-    const char *getPlaceholder(); // @deprecated, use getLabel
-    int         getValueLength();
-    int         getLabelPlacement();
-    const char *getCustomHTML();
+    const char *getID() const;
+    const char *getValue() const;
+    const char *getLabel() const;
+    const char *getPlaceholder() const; // @deprecated, use getLabel
+    int         getValueLength() const;
+    int         getLabelPlacement() const;
+    const char *getCustomHTML() const;
     void        setValue(const char *defaultValue, int length);
 
   protected:
@@ -237,9 +239,13 @@ class WiFiManager
     //sets timeout for which to attempt connecting on saves, useful if there are bugs in esp waitforconnectloop
     void          setSaveConnectTimeout(unsigned long seconds);
     
+    // lets you disable automatically connecting after save from webportal
+    void          setSaveConnect(bool connect = true);
+    
     // toggle debug output
     void          setDebugOutput(boolean debug);
-    
+    void          setDebugOutput(boolean debug, String prefix); // log line prefix, default "*wm:"
+
     //set min quality percentage to include in scan, defaults to 8% if not specified
     void          setMinimumSignalQuality(int quality = 8);
     
@@ -319,6 +325,9 @@ class WiFiManager
     void          setMenu(std::vector<const char*>& menu);
     void          setMenu(const char* menu[], uint8_t size);
     
+    // set the webapp title, default WiFiManager
+    void          setTitle(String title);
+
     // add params to its own menu page and remove from wifi, NOT TO BE COMBINED WITH setMenu!
     void          setParamsPage(bool enable);
 
@@ -373,6 +382,10 @@ class WiFiManager
     // to preload autoconnect for test fixtures or other uses that skip esp sta config
     bool          preloadWiFi(String ssid, String pass);
 
+    // get hostname helper
+    String        getWiFiHostname();
+
+
     std::unique_ptr<DNSServer>        dnsServer;
 
     #if defined(ESP32) && defined(WM_WEBSERVERSHIM)
@@ -422,7 +435,7 @@ class WiFiManager
     unsigned long _startscan              = 0; // ms for timing wifi scans
     int           _cpclosedelay           = 2000; // delay before wifisave, prevents captive portal from closing to fast.
     bool          _cleanConnect           = false; // disconnect before connect in connectwifi, increases stability on connects
-   
+    bool          _connectonsave          = true; // connect to wifi when saving creds
     bool          _disableSTA             = false; // disable sta when starting ap, always
     bool          _disableSTAConn         = true;  // disable sta when starting ap, if sta is not connected ( stability )
     bool          _channelSync            = false; // use same wifi sta channel when starting ap
@@ -464,6 +477,7 @@ class WiFiManager
 
     const char*   _customHeadElement      = ""; // store custom head element html from user
     String        _bodyClass              = ""; // class to add to body
+    String        _title                  = FPSTR(S_brand); // app title -  default WiFiManager
 
     // internal options
     
@@ -502,13 +516,13 @@ class WiFiManager
     bool          startAP();
     void          setupDNSD();
 
-    uint8_t       connectWifi(String ssid, String pass);
+    uint8_t       connectWifi(String ssid, String pass, bool connect = true);
     bool          setSTAConfig();
     bool          wifiConnectDefault();
-    bool          wifiConnectNew(String ssid, String pass);
+    bool          wifiConnectNew(String ssid, String pass,bool connect = true);
 
     uint8_t       waitForConnectResult();
-    uint8_t       waitForConnectResult(uint16_t timeout);
+    uint8_t       waitForConnectResult(uint32_t timeout);
     void          updateConxResult(uint8_t status);
 
     // webserver handlers
@@ -603,7 +617,8 @@ class WiFiManager
     } wm_debuglevel_t;
 
     boolean _debug  = true;
-    
+    String _debugPrefix = FPSTR(S_debugPrefix);
+
     wm_debuglevel_t debugLvlShow = DEBUG_VERBOSE; // at which level start showing [n] level tags
 
     // build debuglevel support
@@ -622,7 +637,7 @@ class WiFiManager
     #ifdef WM_DEBUG_LEVEL
     uint8_t _debugLevel = (uint8_t)WM_DEBUG_LEVEL;
     #else 
-    uint8_t _debugLevel = DEBUG_DEV; // default debug level
+    uint8_t _debugLevel = DEBUG_VERBOSE; // default debug level
     #endif
 
     // @todo use DEBUG_ESP_PORT ?
