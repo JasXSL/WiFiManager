@@ -312,9 +312,6 @@ class WiFiManager
     //called when wifi settings have been changed and connection was successful ( or setBreakAfterConfig(true) )
     void          setSaveConfigCallback( std::function<void()> func );
 
-    //called when saving either params-in-wifi or params page
-    void          setSaveParamsCallback( std::function<void()> func );
-
     //called when receiving data to the /ajax endpoint
     void          setAjaxCallback( std::function<String(WiFiManager*)> func );
 
