@@ -1940,7 +1940,7 @@ void WiFiManager::handleParamSave() {
 }
 
 void WiFiManager::handleAjax(){
-  DEBUG_WM(DEBUG_VERBOSE,F("<- AJAX"));
+  DEBUG_WM(WM_DEBUG_VERBOSE,F("<- AJAX"));
   handleRequest();
   String page = ""; // @token titlewifi
 
@@ -1951,7 +1951,7 @@ void WiFiManager::handleAjax(){
   server->sendHeader(FPSTR(HTTP_HEAD_CL), String(page.length()));
   server->send(200, FPSTR(HTTP_HEAD_CT), page);
 
-  DEBUG_WM(DEBUG_DEV,F("Sent AJAX response"));
+  DEBUG_WM(WM_DEBUG_DEV,F("Sent AJAX response"));
 }
 
 void WiFiManager::doParamSave(){
@@ -2892,16 +2892,7 @@ void WiFiManager::setSaveParamsCallback( std::function<void()> func ) {
 }
 
 /**
- * setConfigResetCallback, set a callback to occur when a resetSettings() occurs
- * @access public
- * @param {[type]} String(*func)(void)
- */
-void WiFiManager::setAjaxCallback( std::function<String(WiFiManager*)> func ) {
-    _ajaxcallback = func;
-}
-
-/**
- * setPreSaveParamsCallback, set a pre save params callback on params save prior to anything else
+ * setAjaxCallback, set a callback to occur when a request is made to the AJAX endpoint
  * @access public
  * @param {[type]} String(*func)(void)
  */
